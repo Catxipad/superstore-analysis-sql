@@ -1,0 +1,142 @@
+
+Cleaning Data:
+-Used DISTINCT to avoid duplicates
+-Combined relevant data to answer questions
+
+
+-- -- MAX sales by segment
+-- SELECT MAX(sales) :: money, customers.segment
+-- FROM orders
+-- JOIN customers USING (customer_id)
+-- GROUP BY segment
+-- ORDER BY MAX(sales) DESC;
+
+-- Total profit per segment
+SELECT DISTINCT (customers.segment), SUM (orders.profit) :: money AS total_profit
+FROM ((Orders
+INNER JOIN customers USING (customer_id))
+INNER JOIN products USING (product_id))
+GROUP BY segment
+ORDER BY 2;
+
+-- -- AVerage monthly profit by segment
+SELECT segment, AVG(monthly_profit)::money AS avg_monthly_profit
+FROM 
+(SELECT DATE_TRUNC('month',orders.order_date) as order_month, customers.segment, SUM(orders.profit) AS monthly_profit
+FROM orders 
+JOIN customers
+USING(customer_id)
+GROUP BY 1,2) AS temp
+GROUP BY 1
+ORDER BY 2 DESC;
+
+-- -- Items most purchased per segment
+
+SELECT customers.segment, COUNT(products.category) AS total_prod_sold, products.category
+FROM ((Orders
+INNER JOIN customers
+ON Orders.customer_id = customers.customer_id)
+INNER JOIN products
+ON Orders.product_id = products.product_id)
+GROUP BY segment, category
+ORDER BY COUNT (products.category) DESC
+
+
+--Individual products most purchased per segment
+SELECT customers.segment, products.product_name AS pop_products, COUNT(products.product_name) AS amount_sold, products.category
+FROM ((Orders
+INNER JOIN customers
+ON Orders.customer_id = customers.customer_id)
+INNER JOIN products
+ON Orders.product_id = products.product_id)
+GROUP BY segment, category, pop_products
+ORDER BY COUNT (products.product_name) DESC
+
+-- -- Profits by sub-category
+-- SELECT products.category, products.sub_category, SUM(profit) :: money AS total_profit
+-- FROM products
+-- JOIN orders USING (product_id)
+-- GROUP BY 1, 2
+-- ORDER BY total_profit DESC;
+
+-- Most purchases by region
+-- SELECT regions.region, COUNT(products.category) total_prod_purchased, customers.segment
+-- FROM regions
+-- INNER JOIN orders ON orders.region_id = regions.region_id
+-- INNER JOIN customers ON Orders.customer_id = customers.customer_id
+-- INNER JOIN products ON Orders.product_id = products.product_id
+-- GROUP BY 1, 3
+-- ORDER BY COUNT (products.category) DESC
+
+-- Total sales by segment and category
+SELECT regions.region, products.category, SUM(orders.sales) :: money total_sales, customers.segment
+FROM regions
+INNER JOIN orders ON orders.region_id = regions.region_id
+INNER JOIN customers ON Orders.customer_id = customers.customer_id
+INNER JOIN products ON Orders.product_id = products.product_id
+GROUP BY 1, 2, 4
+ORDER BY SUM(orders.sales) DESC
+
+
+--Top producst with max sales
+SELECT orders.product_id, products.category, products.product_name, SUM(quantity) :: money AS total_sales
+FROM orders
+INNER JOIN products ON products.product_id = orders.product_id
+GROUP BY 1, 2, 3
+ORDER BY 4 DESC
+
+-- Average sales over time
+-- SELECT (date_trunc('week', CAST((CAST(orders.order_date AS timestamp) + INTERVAL '1 day') AS timestamp)) - INTERVAL '1 day') AS "order_date", sum(orders.sales) :: money AS "sum", avg(orders.sales) :: money AS "avg"
+-- FROM orders
+-- GROUP BY (date_trunc('week', CAST((CAST(orders.order_date AS timestamp) + INTERVAL '1 day') AS timestamp)) - INTERVAL '1 day')
+-- ORDER BY (date_trunc('week', CAST((CAST(orders.order_date AS timestamp) + INTERVAL '1 day') AS timestamp)) - INTERVAL '1 day') ASC
+
+RETURNS
+
+--Products more returned by segment
+SELECT customers.segment, products.product_name, COUNT(return_date) AS total_returns
+FROM orders
+JOIN returns ON orders.order_id = returns.order_id
+JOIN products ON products.product_id = orders.product_id
+JOIN customers ON customers.customer_id = orders.customer_id
+GROUP BY product_name, segment
+ORDER BY COUNT(return_date) DESC
+
+--Total Sales byt category, sub-category, segment, region
+
+
+NOT USED
+
+DISTINCT producst in purchases
+SELECT DISTINCT(orders.product_id), quantity, product_name
+FROM orders
+JOIN products ON products.product_id = orders.product_id
+WHERE quantity = 3
+ORDER BY 1 ASC, 2 DESC;
+
+-- SELECT DATE_PART('year', order_date) AS order_year, COUNT(DISTINCT order_id) AS yearly_total_orders
+-- FROM orders
+-- JOIN customers USING (customer_id)
+-- GROUP BY DATE_PART('year', order_date);
+
+
+
+
+-- Total sales
+-- SELECT SUM (sales):: money AS total_sales
+-- FROM orders;
+
+-- TOTAL customer type by region
+SELECT region, COUNT(segment) AS total_cust_type, segment
+FROM regions
+JOIN orders USING (region_id)
+JOIN customers USING (customer_id)
+GROUP BY region, segment
+ORDER BY COUNT(segment) DESC, segment
+
+Most products by category
+SELECT COUNT(product_name), category
+FROM products
+GROUP BY category
+ORDER by 1 DESC;
+
